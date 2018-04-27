@@ -56,7 +56,7 @@ public class PrintBitmapItem implements BitmapListener {
 		this.template = template;
 		this.pagedetails = pagedetails;
 		this.imgNum = imgNum;
-		this.printType = printType;
+		//this.printType = printType;
 	}
 
 	@Override

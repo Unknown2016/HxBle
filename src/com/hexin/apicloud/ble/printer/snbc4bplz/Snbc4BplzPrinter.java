@@ -7,6 +7,7 @@ import com.hexin.apicloud.ble.bean.Pages;
 import com.hexin.apicloud.ble.bean.Template;
 import com.hexin.apicloud.ble.bean.Trade;
 import com.hexin.apicloud.ble.common.BleException;
+import com.hexin.apicloud.ble.enums.PrintItemEnum;
 import com.hexin.apicloud.ble.printer.IPrinter;
 import com.snbc.sdk.barcode.BarInstructionImpl.BarPrinter;
 import com.snbc.sdk.barcode.IBarInstruction.ILabelEdit;
@@ -14,6 +15,8 @@ import com.snbc.sdk.barcode.enumeration.InstructionType;
 import com.snbc.sdk.barcode.enumeration.PrinterDirection;
 import com.snbc.sdk.connect.connectImpl.BluetoothConnect;
 import com.uzmap.pkg.uzcore.uzmodule.UZModuleContext;
+import com.uzmap.pkg.uzkit.request.APICloudHttpClient;
+import com.uzmap.pkg.uzkit.request.APICloudHttpClient.ImageOption;
 import android.bluetooth.BluetoothAdapter;
 import android.graphics.Bitmap;
 import com.snbc.sdk.barcode.BarInstructionImpl.*;
@@ -207,13 +210,40 @@ public class Snbc4BplzPrinter implements IPrinter{
 			labelEdit.setLabelSize(template.getTemplateWidth()*8,template.getTemplateHeight()*8);
 			labelEdit.selectPrinterCodepage(26);
 			List<Pages> pagesList = template.getPages();
+			PrintBitmapItem bitmapItem = null;
 			for(Pages page : pagesList){
+				int imgNum = 0;
 				for(Pagedetails pagedetails : page.getPageDetails()){
-					IPrintTemplateItem iPrintTemplateItem = TemplateItemFactory.getInstance().createTemplateItem(pagedetails.getItemType());
-					iPrintTemplateItem.printItem(labelEdit,template,pagedetails,trade);
+					if(pagedetails.getItemType() == PrintItemEnum.IMAGE.ordinal()){
+						imgNum ++;
+					}
+				}
+				for(Pagedetails pagedetails : page.getPageDetails()){
+					if(pagedetails.getItemType() == PrintItemEnum.WATERMARK.ordinal()){
+						IPrintTemplateItem iPrintTemplateItem = TemplateItemFactory.getInstance().createTemplateItem(pagedetails.getItemType());
+						iPrintTemplateItem.printItem(labelEdit,template,pagedetails, trade);
+					}
+				}
+				for(Pagedetails pagedetails : page.getPageDetails()){
+					// 网络图片 异步处理
+					if(pagedetails.getItemType() == PrintItemEnum.IMAGE.ordinal()){
+						bitmapItem = new PrintBitmapItem(labelEdit,barPrinter,template,pagedetails,imgNum,Integer.parseInt(printType));
+						APICloudHttpClient httpClient = APICloudHttpClient.createInstance(moduleContext.getContext());
+						ImageOption imageOption = APICloudHttpClient.builder(pagedetails.getImageUrl());
+						httpClient.getImage(imageOption,bitmapItem); 
+					}else{
+						IPrintTemplateItem iPrintTemplateItem = TemplateItemFactory.getInstance().createTemplateItem(pagedetails.getItemType());
+						iPrintTemplateItem.printItem(labelEdit,template,pagedetails,trade);
+					}
+					
 				}
 			}
-			barPrinter.labelControl().print(1,1);
+			// 0:正常打印 1：旋转180度
+			if(bitmapItem != null && !PrintBitmapItem.flag){
+				//nothing;
+			}else{
+				barPrinter.labelControl().print(1,1);
+			}
 		} catch (Exception e) {
 			throw new BleException(code,e);
 		} 

@@ -7,10 +7,13 @@ import com.hexin.apicloud.ble.bean.Pages;
 import com.hexin.apicloud.ble.bean.Template;
 import com.hexin.apicloud.ble.bean.Trade;
 import com.hexin.apicloud.ble.common.BleException;
+import com.hexin.apicloud.ble.enums.PrintItemEnum;
 import com.hexin.apicloud.ble.printer.IPrinter;
 import com.hexin.apicloud.ble.printer.hprt.IPrintTemplateItem;
 import com.hexin.apicloud.ble.printer.hprt.TemplateItemFactory;
 import com.uzmap.pkg.uzcore.uzmodule.UZModuleContext;
+import com.uzmap.pkg.uzkit.request.APICloudHttpClient;
+import com.uzmap.pkg.uzkit.request.APICloudHttpClient.ImageOption;
 import HPRTAndroidSDK.HPRTPrinterHelper;
 import android.graphics.Bitmap;
 
@@ -181,19 +184,47 @@ public class HprtPrinter implements IPrinter{
 			try {
 				HPRTPrinterHelper.printAreaSize("0","" + template.getTemplateWidth()*8, "" + template.getTemplateHeight()*8,"" + template.getTemplateHeight()*8, "1");
 				List<Pages> pagesList = template.getPages();
+				PrintBitmapItem bitmapItem = null;
 				for(Pages page : pagesList){
+					int imgNum = 0;
 					for(Pagedetails pagedetails : page.getPageDetails()){
-						IPrintTemplateItem iPrintTemplateItem = TemplateItemFactory.getInstance().createTemplateItem(pagedetails.getItemType());
-						iPrintTemplateItem.printItem(template,pagedetails, trade);
+						if(pagedetails.getItemType() == PrintItemEnum.IMAGE.ordinal()){
+							imgNum ++;
+						}
+					}
+					for(Pagedetails pagedetails : page.getPageDetails()){
+						if(pagedetails.getItemType() == PrintItemEnum.WATERMARK.ordinal()){
+							IPrintTemplateItem iPrintTemplateItem = TemplateItemFactory.getInstance().createTemplateItem(pagedetails.getItemType());
+							iPrintTemplateItem.printItem(template,pagedetails, trade);
+						}
+					}
+					for(Pagedetails pagedetails : page.getPageDetails()){
+						// 网络图片 异步处理
+						if(pagedetails.getItemType() == PrintItemEnum.IMAGE.ordinal()){
+							bitmapItem = new PrintBitmapItem(template,pagedetails,imgNum,Integer.parseInt(printType));
+							APICloudHttpClient httpClient = APICloudHttpClient.createInstance(moduleContext.getContext());
+							ImageOption imageOption = APICloudHttpClient.builder(pagedetails.getImageUrl());
+							httpClient.getImage(imageOption,bitmapItem); 
+						}else{
+							IPrintTemplateItem iPrintTemplateItem = TemplateItemFactory.getInstance().createTemplateItem(pagedetails.getItemType());
+							iPrintTemplateItem.printItem(template,pagedetails, trade);
+						}
+						
 					}
 				}
 				HPRTPrinterHelper.Form();
-				// 反打
-				if("1".equals(printType)){
-					HPRTPrinterHelper.PoPrint();
+				// 0:正常打印 1：旋转180度
+				if(bitmapItem != null && !PrintBitmapItem.flag){
+					//nothing;
 				}else{
-					 HPRTPrinterHelper.Print();
+					// 反打
+					if("1".equals(printType)){
+						HPRTPrinterHelper.PoPrint();
+					}else{
+						 HPRTPrinterHelper.Print();
+					}
 				}
+				
 			} catch (Exception e) {
 				//Toast.makeText(moduleContext.getContext(), "打印异常:"+e.getMessage(),Toast.LENGTH_LONG).show();
 				throw new BleException(BleException.SYS_EXCEPTION.getCode(),e);

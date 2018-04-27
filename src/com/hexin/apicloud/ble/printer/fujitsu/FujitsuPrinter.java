@@ -9,8 +9,11 @@ import com.hexin.apicloud.ble.bean.Pages;
 import com.hexin.apicloud.ble.bean.Template;
 import com.hexin.apicloud.ble.bean.Trade;
 import com.hexin.apicloud.ble.common.BleException;
+import com.hexin.apicloud.ble.enums.PrintItemEnum;
 import com.hexin.apicloud.ble.printer.IPrinter;
 import com.uzmap.pkg.uzcore.uzmodule.UZModuleContext;
+import com.uzmap.pkg.uzkit.request.APICloudHttpClient;
+import com.uzmap.pkg.uzkit.request.APICloudHttpClient.ImageOption;
 import android.graphics.Bitmap;
 import android.widget.Toast;
 
@@ -163,17 +166,40 @@ public class FujitsuPrinter implements IPrinter{
 					try {
 						lpk130.NFCP_createPage(template.getTemplateWidth()*8 ,template.getTemplateHeight()*8);
 						List<Pages> pagesList = template.getPages();
+						PrintBitmapItem bitmapItem = null;
 						for(Pages page : pagesList){
+							int imgNum = 0;
 							for(Pagedetails pagedetails : page.getPageDetails()){
-								IPrintTemplateItem iPrintTemplateItem = TemplateItemFactory.getInstance().createTemplateItem(pagedetails.getItemType());
-								iPrintTemplateItem.printItem(lpk130,template,pagedetails, trade);
+								if(pagedetails.getItemType() == PrintItemEnum.IMAGE.ordinal()){
+									imgNum ++;
+								}
+							}
+							for(Pagedetails pagedetails : page.getPageDetails()){
+								if(pagedetails.getItemType() == PrintItemEnum.WATERMARK.ordinal()){
+									IPrintTemplateItem iPrintTemplateItem = TemplateItemFactory.getInstance().createTemplateItem(pagedetails.getItemType());
+									iPrintTemplateItem.printItem(lpk130,template,pagedetails, trade);
+								}
+							}
+							for(Pagedetails pagedetails : page.getPageDetails()){
+								// 网络图片 异步处理
+								if(pagedetails.getItemType() == PrintItemEnum.IMAGE.ordinal()){
+									bitmapItem = new PrintBitmapItem(lpk130,template,pagedetails,imgNum,Integer.parseInt(printType));
+									APICloudHttpClient httpClient = APICloudHttpClient.createInstance(moduleContext.getContext());
+									ImageOption imageOption = APICloudHttpClient.builder(pagedetails.getImageUrl());
+									httpClient.getImage(imageOption,bitmapItem); 
+								}else{
+									IPrintTemplateItem iPrintTemplateItem = TemplateItemFactory.getInstance().createTemplateItem(pagedetails.getItemType());
+									iPrintTemplateItem.printItem(lpk130,template,pagedetails, trade);
+								}
+								
 							}
 						}
-						// 反打 富士通不支持180反转 暂时只支持90
-						if("1".equals(printType)){
-							lpk130.NFCP_printPage(0, 0);
+						// 0:正常打印 1：旋转180度
+						if(bitmapItem != null && !PrintBitmapItem.flag){
+							//nothing;
 						}else{
-							 lpk130.NFCP_printPage(0, 0);
+							// 反打 富士通不支持180反转 暂时只支持90
+							lpk130.NFCP_printPage(0, 0);
 						}
 					} catch (Exception e) {
 						Toast.makeText(moduleContext.getContext(), "打印异常:"+e.getMessage(),Toast.LENGTH_LONG).show();
