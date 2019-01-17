@@ -49,7 +49,7 @@ public class PrintBarcodeItem implements IPrintTemplateItem {
 	 */
 	public enum BarWidthEnum {
 		
-		WIDTH1(1,15),WIDTH2(2,30),WIDTH3(3,40),WIDTH4(4,60),WIDTH5(5,76);
+		WIDTH1(1,15),WIDTH2(2,30),WIDTH3(3,47),WIDTH4(4,62),WIDTH5(5,76);
 	    
 		//富士通 fontsize
 	    private int index;

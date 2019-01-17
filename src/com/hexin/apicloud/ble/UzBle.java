@@ -1,6 +1,9 @@
 package com.hexin.apicloud.ble;
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.Set;
 import org.json.JSONArray;
@@ -434,6 +437,23 @@ public class UzBle extends UZModule {
 			final Trade trade = com.alibaba.fastjson.JSONObject.parseObject(tradeStr,Trade.class);
 			final Template template = com.alibaba.fastjson.JSONObject.parseObject(templateStr,Template.class);
 			mIPrinter.printQrcode(moduleContext, template, trade, type);
+			retCallback(moduleContext,true);
+		} catch (BleException e) {
+			errcodeCallback(moduleContext,e.getCode(),e);
+		}
+	}
+	
+	/**
+	 * 打印指令集
+	 * @param moduleContext
+	 * 
+	 */
+	public void jsmethod_printCmdSet(UZModuleContext moduleContext) {
+		try {
+			String cmdSet = moduleContext.optString("cmdSet");
+			// 打印方式 0：正打 1：反打(旋转180度)
+			String printType = moduleContext.optString("printType");
+			mIPrinter.sendCmd(cmdSet,printType);
 			retCallback(moduleContext,true);
 		} catch (BleException e) {
 			errcodeCallback(moduleContext,e.getCode(),e);

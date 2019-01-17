@@ -1,4 +1,9 @@
 package com.hexin.apicloud.ble.printer.qr386a;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.InputStreamReader;
+import java.lang.reflect.Method;
+import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -193,7 +198,8 @@ public class Qr386aPrinter implements IPrinter{
 				if(bitmapItem != null && !PrintBitmapItem.flag){
 					//nothing;
 				}else{
-					iPrinter.print(Integer.parseInt(printType),0);
+					//skip - 0:打印结束后不定位,直接停止; 1:打印结束后定位到标签分割线,如果 无缝隙,最大进纸 30mm 后停止
+					iPrinter.print(Integer.parseInt(printType),1);
 				}
 				
 			} catch (Exception e) {
@@ -269,7 +275,7 @@ public class Qr386aPrinter implements IPrinter{
 					if(bitmapItem != null && !PrintBitmapItem.flag){
 						//nothing;
 					}else{
-						iPrinter.print(Integer.parseInt(printType),0);
+						iPrinter.print(Integer.parseInt(printType),1);
 					}
 				}
 			} catch (Exception e) {
@@ -310,4 +316,32 @@ public class Qr386aPrinter implements IPrinter{
 		iPrinter.print(0,0);
 	}
 
+	@Override
+	public boolean sendCmd(String cmd,String printType) throws BleException{
+		String status = "OK";
+		try {
+			status = iPrinter.printerStatus();
+		}catch (Exception e) {
+			throw BleException.STATUS_EXCEPTION;
+		}
+		if("CoverOpened".equalsIgnoreCase(status)){
+			throw BleException.OPEN_EXCEPTION;
+		}
+		if("NoPaper".equalsIgnoreCase(status)){
+			throw BleException.LACK_PAPER_EXCEPTION;
+		}
+		if("OK".equalsIgnoreCase(status) || "Printing".equalsIgnoreCase(status)){
+			try {
+				Method method = Printer.class.getDeclaredMethod("portSendCmd",String.class);
+				method.setAccessible(true);
+				method.invoke(iPrinter,cmd);
+				//iPrinter.print(Integer.parseInt(printType),1);
+				return true;
+			} catch (Exception e) {
+				throw new BleException(BleException.SYS_EXCEPTION.getCode(),e);
+			}
+		}else{
+			throw BleException.OTHER_EXCEPTION;
+		}
+	}
 }

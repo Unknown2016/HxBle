@@ -333,4 +333,9 @@ public class Snbc4BplzPrinter implements IPrinter{
 		//nothing;
 	}
 	
+	@Override
+	public boolean sendCmd(String cmd,String printType) throws BleException{
+		return false;
+	}
+	
 }

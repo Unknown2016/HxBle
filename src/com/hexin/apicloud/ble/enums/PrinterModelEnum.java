@@ -6,7 +6,7 @@ package com.hexin.apicloud.ble.enums;
  */
 public enum PrinterModelEnum {
 	//新北洋
-	P32("P32","SNBC"),P33("P33","SNBC"),P36("P36","SNBC"),L640H("L640H","SNBC"),V540L("V540L","SNBC"),L690H("L690H","SNBC"),
+	P32("P32","SNBC"),P33("P33","SNBC"),P36("P36","SNBC"),L640H("L640H","SNBC"),V540L("V540L","SNBC"),L690H("L690H","SNBC"),UPN80I("UPN80I","SNBC"),
 	//汉印
 	HMZ3("HM-Z3","HPRT"),BMAU32("BMAU32","HPRT"),A318("A318","HPRT"),M35("M35","HPRT"),HMA300("HM-A300","HPRT"),
 	//启锐

@@ -1,21 +1,16 @@
 package com.hexin.apicloud.ble.printer.fujitsu;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import com.alibaba.fastjson.JSONObject;
 import com.fujitsu.sdk.LPK130;
 import com.hexin.apicloud.ble.bean.Pagedetails;
 import com.hexin.apicloud.ble.bean.Template;
 import com.hexin.apicloud.ble.bean.TextItems;
 import com.hexin.apicloud.ble.bean.Trade;
-import com.hexin.apicloud.ble.bean.Trade2Template;
-import com.hexin.apicloud.ble.common.Constants;
-import com.hexin.apicloud.ble.enums.TextItemTypeEnum;
-import com.hexin.apicloud.ble.util.BeanUtil;
-import com.hexin.apicloud.ble.util.DateUtil;
 import com.hexin.apicloud.ble.util.NumberUtil;
-import com.hexin.apicloud.ble.util.StringUtil;
-import HPRTAndroidSDK.HPRTPrinterHelper;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.util.Base64;
 /**
  * 打印水印
  * 实现类
@@ -35,71 +30,15 @@ public class PrintWaterMarkItem implements IPrintTemplateItem {
 	@Override
 	public void printItem(LPK130 lpk130,Template template,Pagedetails pagedetails,Trade trade) throws Exception{
 		 List<TextItems> textItems = pagedetails.getTextItems();
-		 Trade2Template trade2Template = new Trade2Template();
-		 BeanUtil.copyProperty(trade, trade2Template);
-		 JSONObject tradeJson = (JSONObject) JSONObject.toJSON(trade2Template);
-		 StringBuffer sb = new StringBuffer();
 		 for(TextItems textItem : textItems){
-			 if(TextItemTypeEnum.PRINT.ordinal() == textItem.getType()){
-				 if(!StringUtil.isEmpty(textItem.getCode())){
-					//有格式化的 截掉后面格式化部分 例:addedServices.servInsureAmount|money
-					 String code = textItem.getCode();
-					 Pattern formatReg = Pattern.compile("^.+\\|\\w+$");
-					 Matcher matcher = formatReg.matcher(code);
-					 if(matcher.matches()){
-						 int endIndex = textItem.getCode().lastIndexOf("|");
-						 if(endIndex > 0){
-							 code = code.substring(0, endIndex);
-						 }
-						 if(Constants.TEMPLATE_DATE_ITEM.equalsIgnoreCase(code)){
-							 String format = textItem.getCode().substring(endIndex + 1);
-							 String  nowDate = DateUtil.currentFormatDate(DateUtil.DATE_TO_STRING_NOWYMD_PATTERN);					;
-							 switch (format){
-							 case Constants.TEMPLATE_DATE_NOWYMDT:
-								 nowDate = DateUtil.currentFormatDate(DateUtil.DATE_TO_STRING_NOWYMDT_PATTERN);						 
-								 break;
-							 case Constants.TEMPLATE_DATE_NOWYMD:
-								 nowDate = DateUtil.currentFormatDate(DateUtil.DATE_TO_STRING_NOWYMD_PATTERN);					
-								 break;
-							 case Constants.TEMPLATE_DATE_NOWY:
-								 nowDate = DateUtil.currentFormatDate(DateUtil.DATE_TO_STRING_NOWY_PATTERN);					
-								 break;
-							 case Constants.TEMPLATE_DATE_NOWM:
-								 nowDate = DateUtil.currentFormatDate(DateUtil.DATE_TO_STRING_NOWM_PATTERN);					
-								 break;
-							 case Constants.TEMPLATE_DATE_NOWD:
-								 nowDate = DateUtil.currentFormatDate(DateUtil.DATE_TO_STRING_NOWD_PATTERN);					
-								 break;
-							 case Constants.TEMPLATE_DATE_NOWT:
-								 nowDate = DateUtil.currentFormatDate(DateUtil.DATE_TO_STRING_NOWT_PATTERN);					
-								 break;
-							 }
-							 sb.append(nowDate);
-						 }
-					 }
-					 if(!StringUtil.isEmpty(tradeJson.getString(code))){
-						 sb.append(tradeJson.getString(code));
-						 sb.append(" ");
-					 }
-				 }
-			 }else if(TextItemTypeEnum.CUSTOM.ordinal() == textItem.getType()){
-				 sb.append(textItem.getText());
-				 sb.append(" ");
-			 }else{
-				 //todo
-			 }
-		 }
-		 if(!"null".equals(sb.toString())&&!"".equals(sb.toString())){
-			 int fontsize = FontSizeEnum.valueOf(pagedetails.getFontSize()).getIndex();
-			 if("left".equalsIgnoreCase(pagedetails.getTextAlign())){
-				 HPRTPrinterHelper.Align(HPRTPrinterHelper.LEFT);
-			 }else if("center".equalsIgnoreCase(pagedetails.getTextAlign())){
-				 HPRTPrinterHelper.Align(HPRTPrinterHelper.CENTER);
-			 }else if("right".equalsIgnoreCase(pagedetails.getTextAlign())){
-				 HPRTPrinterHelper.Align(HPRTPrinterHelper.RIGHT);
-			 }
-			 HPRTPrinterHelper.AutLine("" + NumberUtil.mm2Dot(pagedetails.getX().add(template.getCalibrationX())),"" + NumberUtil.mm2Dot(pagedetails.getY().add(template.getCalibrationY())),NumberUtil.mm2Dot(pagedetails.getWidth()),fontsize,pagedetails.isFontBold(),false,sb.toString());
-			 HPRTPrinterHelper.Align(HPRTPrinterHelper.LEFT);
+			 String base64Img = textItem.getText();
+				// 转成RGB565彩色模式的Bitmap
+				byte[] bitmapArray = Base64.decode(base64Img,Base64.DEFAULT);
+				BitmapFactory.Options options =new BitmapFactory.Options();
+				options.inPreferredConfig = Bitmap.Config.RGB_565;
+				InputStream	input = new ByteArrayInputStream(bitmapArray);
+				Bitmap bitmap = BitmapFactory.decodeStream(input,null,options);
+				lpk130.NFCP_Page_printBitmap(NumberUtil.mm2Dot(pagedetails.getX().add(template.getCalibrationX())), NumberUtil.mm2Dot(pagedetails.getY().add(template.getCalibrationY())), bitmap);
 		 }
 		 
 	}

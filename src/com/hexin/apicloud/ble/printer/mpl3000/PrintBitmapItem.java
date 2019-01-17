@@ -1,10 +1,10 @@
-package com.hexin.apicloud.ble.printer.qr386a;
+package com.hexin.apicloud.ble.printer.mpl3000;
 import java.util.HashSet;
 import java.util.Set;
 import com.hexin.apicloud.ble.bean.Pagedetails;
 import com.hexin.apicloud.ble.bean.Template;
 import com.hexin.apicloud.ble.util.NumberUtil;
-import com.qr.printer.Printer;
+import com.shenyuan.fujitsu.mylibrary.lib.bt.Printer;
 import com.uzmap.pkg.uzkit.request.APICloudHttpClient.BitmapListener;
 import android.graphics.Bitmap;
 /**
@@ -15,9 +15,9 @@ import android.graphics.Bitmap;
 public class PrintBitmapItem implements BitmapListener {
 	
 	/**
-	 * 启锐386a打印工具类
+	 * 富士通MPL3000打印工具类
 	 */
-	private  Printer iPrinter;
+	private Printer printer;
 	
 	/**
 	 * 模板
@@ -37,7 +37,7 @@ public class PrintBitmapItem implements BitmapListener {
 	/**
 	 * 打印方式  0:正常打印 1：旋转180度
 	 */
-	private int printType;
+	//private int printType;
 	
 	/**
 	 * 保存图片 用于判断数量是否跟imgNum 相等
@@ -47,17 +47,16 @@ public class PrintBitmapItem implements BitmapListener {
 	/**
 	 * 第一次加载网络图片后设置成true,之后不调用图片这里的打印
 	 */
-	public  static volatile boolean flag;
+	public static boolean flag;
 	
 	
-	
-	public PrintBitmapItem(Printer iPrinter,Template template,Pagedetails pagedetails,int imgNum,int printType) {
+	public PrintBitmapItem(Printer printer,Template template,Pagedetails pagedetails,int imgNum,int printType) {
 		super();
-		this.iPrinter = iPrinter;
+		this.printer = printer;
 		this.template = template;
 		this.pagedetails = pagedetails;
 		this.imgNum = imgNum;
-		this.printType = printType;
+		//this.printType = printType;
 	}
 
 	@Override
@@ -71,13 +70,12 @@ public class PrintBitmapItem implements BitmapListener {
 	@Override
 	public void onFinish(Bitmap bmp, boolean arg1) {
 		if(bmp != null){
-			iPrinter.drawGraphic(NumberUtil.mm2Dot(pagedetails.getX().add(template.getCalibrationX())),NumberUtil.mm2Dot(pagedetails.getY().add(template.getCalibrationY())), bmp.getWidth(), bmp.getHeight(), bmp);
+			printer.draw_bitmap(NumberUtil.mm2Dot(pagedetails.getX().add(template.getCalibrationX())), NumberUtil.mm2Dot(pagedetails.getY().add(template.getCalibrationY())), bmp,false);
 			if(!imgSet.contains(pagedetails.getImageUrl())){
 				imgSet.add(pagedetails.getImageUrl());
 				if(imgSet.size() == imgNum && !flag){
 					flag = true;
-					// 0:正常打印 1：旋转180度
-					iPrinter.print(printType,1);
+					printer.page_print(Printer.MarkNone);
 				}
 			}
 		}

@@ -321,4 +321,37 @@ public class HprtPrinter implements IPrinter{
 		//nothing;
 	}
 	
+	@Override
+	public boolean sendCmd(String cmd,String printType) throws BleException{
+		int status = 0;
+		try {
+			status = HPRTPrinterHelper.getstatus();
+		}catch (Exception e) {
+			throw new BleException(BleException.STATUS_EXCEPTION.getCode(),e);
+		}
+		switch (status) {
+			// 打印机准备就绪
+			case 0: case 1:
+			try {
+				int ret = HPRTPrinterHelper.printText(cmd);
+				if(ret > 0){
+					return true;
+				}else{
+					return false;
+				}
+			} catch (Exception e) {
+				throw new BleException(BleException.SYS_EXCEPTION.getCode(),e);
+			}
+			// 打印机缺纸
+			case 2:
+				throw BleException.LACK_PAPER_EXCEPTION;
+			// 打印机开盖
+			case 6:
+				throw BleException.OPEN_EXCEPTION;
+			// 打印机出错
+			default:
+				throw BleException.OTHER_EXCEPTION;
+		}
+	}
+	
 }

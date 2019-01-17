@@ -49,6 +49,7 @@ public class PrinterFactory {
 		printerMap.put(PrinterModelEnum.L640H.getName(), new Snbc4BplzPrinter());
 		printerMap.put(PrinterModelEnum.L690H.getName(), new Snbc4BplzPrinter());
 		printerMap.put(PrinterModelEnum.V540L.getName(), new Snbc4BplzPrinter());
+		printerMap.put(PrinterModelEnum.UPN80I.getName(), new Snbc4BplcPrinter());
 		printerMap.put(PrinterModelEnum.HMZ3.getName(), new HprtPrinter());
 		printerMap.put(PrinterModelEnum.BMAU32.getName(), new HprtPrinter());
 		printerMap.put(PrinterModelEnum.A318.getName(), new HprtPrinter());

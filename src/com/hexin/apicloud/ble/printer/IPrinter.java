@@ -81,4 +81,13 @@ public interface IPrinter {
 	 */
 	void printQrcode(UZModuleContext moduleContext,Template template,Trade trade,String type) throws BleException;
 	
+	/**
+	 * CPCL指令集打印
+	 * @param cmd cpcl指令集
+	 * @param printType 0：正打 1：180度反打
+	 * @return
+	 * @throws BleException
+	 */
+	boolean sendCmd(String cmd,String printType) throws BleException;
+	
 }

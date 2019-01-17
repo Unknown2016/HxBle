@@ -136,7 +136,7 @@ public class PrintTextItem implements IPrintTemplateItem {
 	            lastSubStrIndex = i;
 	        } 
 	        if(i == content.length()-1){
-	        	//lpk130.NFCP_Page_setText(startX,startY, content.substring(lastSubStrIndex,i+1), fontsize, 0, fontbold, false, false);
+	        	printer.draw_text(startX.intValue(), startY.intValue(),fontsize, content.substring(lastSubStrIndex,i+1),0);
 	        }
 	    }
 	}

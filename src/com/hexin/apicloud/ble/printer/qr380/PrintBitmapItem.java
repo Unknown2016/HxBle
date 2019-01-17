@@ -76,7 +76,7 @@ public class PrintBitmapItem implements BitmapListener {
 				if(imgSet.size() == imgNum && !flag){
 					flag = true;
 					// 0:正常打印 1：旋转180度
-					printPP_cpcl.print(printType,0);
+					printPP_cpcl.print(printType,1);
 				}
 			}
 		}

@@ -45,10 +45,10 @@ public class TemplateItemFactory {
 		templateItemMap.put(PrintItemEnum.QRCODE.ordinal(), new PrintQRCodeItem());
 		templateItemMap.put(PrintItemEnum.RECTANGLE.ordinal(), new PrintRectangleItem());
 		templateItemMap.put(PrintItemEnum.BARCODE.ordinal(), new PrintBarcodeItem());
-		templateItemMap.put(PrintItemEnum.GRID.ordinal(), new PrintGridItem());
-		templateItemMap.put(PrintItemEnum.SEQNUMBER.ordinal(), new PrintSeqNumberItem());
-		templateItemMap.put(PrintItemEnum.BLANK.ordinal(), new PrintBlankItem());
-		templateItemMap.put(PrintItemEnum.WATERMARK.ordinal(), new PrintWaterMarkItem());
+		templateItemMap.put(PrintItemEnum.GRID.getIndex(), new PrintGridItem());
+		templateItemMap.put(PrintItemEnum.SEQNUMBER.getIndex(), new PrintSeqNumberItem());
+		templateItemMap.put(PrintItemEnum.BLANK.getIndex(), new PrintBlankItem());
+		templateItemMap.put(PrintItemEnum.WATERMARK.getIndex(), new PrintWaterMarkItem());
     }
 	
 	/**

@@ -199,7 +199,7 @@ public class FujitsuPrinter implements IPrinter{
 							//nothing;
 						}else{
 							// 反打 富士通不支持180反转 暂时只支持90
-							lpk130.NFCP_printPage(0, 0);
+							lpk130.NFCP_printPage(0, 1);
 						}
 					} catch (Exception e) {
 						Toast.makeText(moduleContext.getContext(), "打印异常:"+e.getMessage(),Toast.LENGTH_LONG).show();
@@ -336,4 +336,8 @@ public class FujitsuPrinter implements IPrinter{
 		 }
 	}
 	
+	@Override
+	public boolean sendCmd(String cmd,String printType) throws BleException{
+		return false;
+	}
 }

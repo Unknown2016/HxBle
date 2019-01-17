@@ -6,16 +6,24 @@ package com.hexin.apicloud.ble.enums;
  */
 public enum PrintItemEnum {
 	
-	TEXT("文本"),IMAGE("图片"),LINE("线条"),QRCODE("二维码"),RECTANGLE("矩形"),BARCODE("条码"),
+	TEXT(0,"文本"),IMAGE(1,"图片"),LINE(2,"线条"),QRCODE(3,"二维码"),RECTANGLE(4,"矩形"),BARCODE(5,"条码"),
     
-    GRID("表格"),SEQNUMBER("序号"),BLANK("空白"),WATERMARK("水印");
-    
+    GRID(10,"表格"),SEQNUMBER(11,"序号"),BLANK(12,"空白"),WATERMARK(13,"水印");
+	
+    private int index;
     private String name;
-   
-    private PrintItemEnum(String name) {
-    	 this.name = name;
-    }
-      
+    private PrintItemEnum(int index,String name) {
+    	this.index = index;
+   	 	this.name = name;
+   }
+    public int getIndex() {
+		return index;
+	}
+
+	public void setIndex(int index) {
+		this.index = index;
+	}
+
 	public String getName() {
 	    return name;
 	}

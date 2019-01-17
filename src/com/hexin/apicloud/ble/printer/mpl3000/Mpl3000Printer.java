@@ -7,9 +7,12 @@ import com.hexin.apicloud.ble.bean.Pages;
 import com.hexin.apicloud.ble.bean.Template;
 import com.hexin.apicloud.ble.bean.Trade;
 import com.hexin.apicloud.ble.common.BleException;
+import com.hexin.apicloud.ble.enums.PrintItemEnum;
 import com.hexin.apicloud.ble.printer.IPrinter;
 import com.shenyuan.fujitsu.mylibrary.lib.bt.Printer;
 import com.uzmap.pkg.uzcore.uzmodule.UZModuleContext;
+import com.uzmap.pkg.uzkit.request.APICloudHttpClient;
+import com.uzmap.pkg.uzkit.request.APICloudHttpClient.ImageOption;
 import android.graphics.Bitmap;
 
 /**
@@ -149,19 +152,45 @@ public class Mpl3000Printer implements IPrinter{
 //		 if (lpk130.openDevice("00:0C:B6:03:33:CA") >= 0){
 				try {
 					if(printer.get_state(5000) == Printer.PrinterState.Nomal){
-						printer.page_creat(template.getTemplateWidth()*8 ,template.getTemplateHeight()*8,1);
+						printer.page_creat(template.getTemplateWidth() ,template.getTemplateHeight(),1);
 						List<Pages> pagesList = template.getPages();
+						PrintBitmapItem bitmapItem = null;
 						for(Pages page : pagesList){
+							int imgNum = 0;
 							for(Pagedetails pagedetails : page.getPageDetails()){
-								IPrintTemplateItem iPrintTemplateItem = TemplateItemFactory.getInstance().createTemplateItem(pagedetails.getItemType());
-								iPrintTemplateItem.printItem(printer,template,pagedetails, trade);
+								if(pagedetails.getItemType() == PrintItemEnum.IMAGE.ordinal()){
+									imgNum ++;
+								}
+							}
+							for(Pagedetails pagedetails : page.getPageDetails()){
+								if(pagedetails.getItemType() == PrintItemEnum.WATERMARK.ordinal()){
+									IPrintTemplateItem iPrintTemplateItem = TemplateItemFactory.getInstance().createTemplateItem(pagedetails.getItemType());
+									iPrintTemplateItem.printItem(printer,template,pagedetails, trade);
+								}
+							}
+							for(Pagedetails pagedetails : page.getPageDetails()){
+								// 网络图片 异步处理
+								if(pagedetails.getItemType() == PrintItemEnum.IMAGE.ordinal()){
+									bitmapItem = new PrintBitmapItem(printer,template,pagedetails,imgNum,Integer.parseInt(printType));
+									APICloudHttpClient httpClient = APICloudHttpClient.createInstance(moduleContext.getContext());
+									ImageOption imageOption = APICloudHttpClient.builder(pagedetails.getImageUrl());
+									httpClient.getImage(imageOption,bitmapItem); 
+								}else{
+									IPrintTemplateItem iPrintTemplateItem = TemplateItemFactory.getInstance().createTemplateItem(pagedetails.getItemType());
+									iPrintTemplateItem.printItem(printer,template,pagedetails, trade);
+								}
 							}
 						}
-						// 反打 富士通不支持180反转 暂时只支持90
-						if("1".equals(printType)){
-							printer.page_print(0);
+						if(bitmapItem != null && !PrintBitmapItem.flag){
+							//nothing;
 						}else{
-							 printer.page_print(0);
+							// 反打 富士通不支持180反转 暂时只支持90
+							printer.page_print(Printer.MarkNone);
+//							if("1".equals(printType)){
+//								printer.page_print(Printer.MarkNone);
+//							}else{
+//								 printer.page_print(Printer.MarkNone);
+//							}
 						}
 					}else{
 						throw BleException.STATUS_EXCEPTION;
@@ -287,6 +316,11 @@ public class Mpl3000Printer implements IPrinter{
 //		 }else{
 //			 Toast.makeText(moduleContext.getContext(), "蓝牙连接失败",Toast.LENGTH_LONG).show();
 //		 }
+	}
+	
+	@Override
+	public boolean sendCmd(String cmd,String printType) throws BleException{
+		return false;
 	}
 	
 }

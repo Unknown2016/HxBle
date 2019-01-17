@@ -1,4 +1,9 @@
 package com.hexin.apicloud.ble.printer.qr380;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.InputStreamReader;
+import java.lang.reflect.Method;
+import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,6 +15,7 @@ import com.hexin.apicloud.ble.common.BleException;
 import com.hexin.apicloud.ble.enums.PrintItemEnum;
 import com.hexin.apicloud.ble.printer.IPrinter;
 import com.hexin.apicloud.ble.printer.qr380.PrintBitmapItem;
+import com.qr.printer.Printer;
 import com.uzmap.pkg.uzcore.uzmodule.UZModuleContext;
 import com.uzmap.pkg.uzkit.request.APICloudHttpClient;
 import com.uzmap.pkg.uzkit.request.APICloudHttpClient.ImageOption;
@@ -192,7 +198,8 @@ public class Qr380Printer implements IPrinter{
 				if(bitmapItem != null && !PrintBitmapItem.flag){
 					//nothing;
 				}else{
-					printPP_cpcl.print(Integer.parseInt(printType),0);
+					//skip - 0:打印结束后不定位,直接停止; 1:打印结束后定位到标签分割线,如果 无缝隙,最大进纸 30mm 后停止
+					printPP_cpcl.print(Integer.parseInt(printType),1);
 				}
 			} catch (Exception e) {
 				throw new BleException(BleException.SYS_EXCEPTION.getCode(),e);
@@ -268,7 +275,8 @@ public class Qr380Printer implements IPrinter{
 					if(bitmapItem != null && !PrintBitmapItem.flag){
 						//nothing;
 					}else{
-						printPP_cpcl.print(Integer.parseInt(printType),0);
+						//0:正常打印,不旋转; 1:整个页面顺时针旋转 180°后,再打印 skip - 0:打印结束后不定位,直接停止; 1:打印结束后定位到标签分割线,如果 无缝隙,最大进纸 30mm 后停止
+						printPP_cpcl.print(Integer.parseInt(printType),1);
 					}
 				}
 			} catch (Exception e) {
@@ -309,4 +317,37 @@ public class Qr380Printer implements IPrinter{
 		printPP_cpcl.print(0,0);
 	}
 	
+	@Override
+	public boolean sendCmd(String cmd,String printType) throws BleException{
+		String status = "OK";
+		try {
+			status = printPP_cpcl.printerStatus();
+		}catch (Exception e) {
+			throw BleException.STATUS_EXCEPTION;
+		}
+		if("OK".equalsIgnoreCase(status) || "Printing".equalsIgnoreCase(status)){
+			try {
+//				BufferedReader bufferReader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(cmd.getBytes(Charset.forName("UTF-8"))),Charset.forName("UTF-8")));
+//				String line;
+				// 反射调用sdk中发送指令接口
+				Method method = PrintPP_CPCL.class.getDeclaredMethod("portSendCmd",String.class);
+				method.setAccessible(true);
+				method.invoke(printPP_cpcl,cmd);
+//				while((line = bufferReader.readLine()) != null){
+//					method.invoke(printPP_cpcl,line);
+//				}
+				return true;
+			} catch (Exception e) {
+				throw new BleException(BleException.SYS_EXCEPTION.getCode(),e);
+			}
+		}else{
+			if("CoverOpened".equalsIgnoreCase(status)){
+				throw BleException.OPEN_EXCEPTION;
+			}
+			if("NoPaper".equalsIgnoreCase(status)){
+				throw BleException.LACK_PAPER_EXCEPTION;
+			}
+			throw BleException.OTHER_EXCEPTION;
+		}
+	}
 }
